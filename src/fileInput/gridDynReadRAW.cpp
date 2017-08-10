@@ -79,13 +79,6 @@ enum sections
 static coreTime cctime;
 
 std::vector <std::string> sysname;
-std::vector <std::string> Busdata;//###############
-std::vector <std::string> Loaddata;
-std::vector <std::string> Branchdata;
-std::vector <std::string> Transformerdata;
-std::vector <std::string> Generatordata;
-std::vector <std::string> Fixshuntdata;
-std::vector <int> Baseinfor;
 
 
 // get the basic busFactory
@@ -127,6 +120,20 @@ gridBus *findBus (std::vector<gridBus *> &busList, const std::string &line)
 
 void loadRAW (coreObject *parentObject, const std::string &fileName, const basicReaderInfo &bri)
 {
+	std::vector <std::string> Busdata;
+	std::vector <std::string> Loaddata;
+	std::vector <std::string> Branchdata;
+	Branchdata.reserve(1000000);
+
+	std::vector <std::string> Transformerdata;
+	Transformerdata.reserve(1000000);
+	
+	std::vector <std::string> Generatordata;
+	std::vector <std::string> Fixshuntdata;
+	std::vector <int> Baseinfor;
+	griddyn::dimeLib::dimeCollector dimesysname;
+
+
     std::ifstream file (fileName.c_str (), std::ios::in);
     std::string line;  // line storage
     std::string temp1;  // temporary storage for substrings
@@ -462,6 +469,7 @@ Generatordata.push_back(line);
         }
     }
 
+	dimesysname.sendrawinfo(Busdata, Loaddata, Generatordata, Branchdata, Transformerdata,Fixshuntdata, sysname, Baseinfor);
     file.close ();
 }
 

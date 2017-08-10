@@ -9,7 +9,6 @@
  * For details, see the LICENSE file.
  * LLNS Copyright End
 */
-#include "gridDynReadRAW.cpp"
 #include "dimeCollector.h"
 #include "core/objectFactory.hpp"
 #include "Generator.h"
@@ -101,7 +100,7 @@ void loadDYR (coreObject *parentObject, const std::string &fileName, const basic
 
 
     }
-	dimesysname.sendsysparam(Busdata, Loaddata, Generatordata, Branchdata, Transformerdata, Genroudata, Fixshuntdata, sysname, Baseinfor);
+	dimesysname.senddyninfo(Genroudata);
 }
 
 void loadGENROU (coreObject *parentObject, stringVec &tokens)

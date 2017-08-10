@@ -118,6 +118,7 @@ class solverInterface : public helperObject
     bool printResid =
       false;  //!< flag telling the interface to print the residual values to the screen (used for debugging)
   protected:
+	gridDynSimulation *m_gds = nullptr;  //!< pointer the gridDynSimulation object used
     std::string lastErrorString;  //!< string containing the last error
     int lastErrorCode = 0;  //!< the last error Code
 
@@ -141,9 +142,9 @@ class solverInterface : public helperObject
     count_t nnz = 0;  //!< the actual number of non-zeros in a Jacobian
     std::bitset<32> flags;  //!< flags for the solver
 public:
-	gridDynSimulation *m_gds = nullptr;  //!< pointer the gridDynSimulation object used
 
 
+	gridDynSimulation* re_gds() { return m_gds; }
     /** @brief default constructor
      * @param[in] objName  the name of the solver
      */

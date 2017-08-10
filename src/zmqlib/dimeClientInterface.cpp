@@ -33,9 +33,7 @@ std::vector<double> decodeu8todouble(std::string u8)
 	std::string &v = u8;
 	std::vector<uint8_t> xx = utilities::base64_decode(v);
 	std::vector<double> inter(xx.size()/8);
-	const int s = xx.size();
 
-	int size = xx.size() * 8;
 	int k = 0;
 
 	for (int ii = 0; ii < xx.size() / 8; ++ii)
@@ -200,8 +198,8 @@ int dimeClientInterface::syncforcontrol(controlsignal *sp)
 				sz = socket->recv(buffer, 100000, 0);
 				if (sz == 2)
 					break;
-				std::string controlsig = static_cast<std::string>(buffer);
-				r.parse(controlsig, controlsigj);
+				std::string controlsig1 = static_cast<std::string>(buffer);
+				r.parse(controlsig1, controlsigj);
 
 		}
 			if (controlsigj["func_args"][1] == "Event")
@@ -209,9 +207,9 @@ int dimeClientInterface::syncforcontrol(controlsignal *sp)
 				std::cout << "received control signal" << std::endl;
 				std::vector<std::string> signamev;
 				std::vector<int> flgv;
-				for (int ii = 0; ii != controlsigj["func_args"][2]["name"].size(); ++ii)
+				for (size_t ii = 0; ii < controlsigj["func_args"][2]["name"].size(); ++ii)
 				{
-					signamev.push_back(controlsigj["func_args"][2]["name"][ii].asString());
+					signamev.push_back(controlsigj["func_args"][2]["name"][(int)ii].asString());
 					flgv.push_back(1);
 				}
 				sp->flgc = flgv;

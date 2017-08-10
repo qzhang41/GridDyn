@@ -9,14 +9,7 @@
 * For details, see the LICENSE file.
 * LLNS Copyright End
 */
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4702)
-#include "json/json.h"
-#pragma warning(pop)
-#else
-#include "json/json.h"
-#endif
+
 
 #include "gridBus.h"
 #include "Link.h"
@@ -31,14 +24,27 @@ using namespace std;
 
 
 
-static Json::Value Busd;
-static Json::Value PQd;
-static Json::Value PVd;
-static Json::Value lined;
-static Json::Value Genroud;
-static Json::Value Fsd;
-static Json::Value Swd;
-static Json::Value Busnamed;
+Json::Value Busd;
+Json::Value PQd;
+Json::Value PVd;
+Json::Value lined;
+Json::Value Genroud;
+Json::Value Fsd;
+Json::Value Swd;
+Json::Value Busnamed;
+std::vector <std::string> sysname2;
+std::vector <std::string> Busdata2;
+std::vector <std::string> Loaddata2;
+std::vector <std::string> Branchdata2;
+std::vector <std::string> Transformerdata2;
+std::vector <std::string> Generatordata2;
+std::vector <std::string> Fixshuntdata2;
+std::vector <int> Baseinfor2;
+std::vector <std::vector<double>> Genroudata2;
+std::vector<double> total;
+std::vector<std::string> totalname;
+Json::Value Varvgs;
+Json::Value Varheader;
 
 static int swidx;
 static int swv;
@@ -114,7 +120,7 @@ int idxfindend(int a, int b)
 
 void setcontrol(double t)
 {
-	int sicon = queueforcon.size();
+	int sicon =static_cast<int> (queueforcon.size());
 	for (int si = 0; si < sicon; ++si)
 	{
 
@@ -124,7 +130,7 @@ void setcontrol(double t)
 		std::vector<double> controltime = queueforcon[si].timec;
 		std::vector<double> controlduration = queueforcon[si].duration;
 		std::vector<int> flg = queueforcon[si].flgc;
-		int k = controlname.size();
+		int k =static_cast<int> (controlname.size());
 
 		for (int ss = 0; ss < k; ++ss)
 		{
@@ -209,422 +215,38 @@ void setcontrol(double t)
 }
 
 
-
+//gain control info
 void dimeCollector::sendinfo(std::vector<Link*> linkinfo, std::vector<gridBus*> businfo)
 {
 	dimlinkinfo = linkinfo;
 	dimbusinfo = businfo;
 }
 
-//orgnize how to send to clients
-change_code dimeCollector::trigger(coreTime time)
+//gain raw info
+void dimeCollector::sendrawinfo(std::vector<std::string> Busdata1, std::vector<std::string> Loaddata1, std::vector<std::string> Generatordata1, std::vector<std::string> branchdata1, std::vector<std::string> transformerdata1, std::vector<std::string> Fixshuntdata1, std::vector <std::string> sysname1, std::vector<int> Baseinfor1)
 {
-	double t = time;
-	Json::Value Varvgs;
-	Json::Value Varheader;
-	
-	
-
-	if (!dime)
-	{
-		dime = std::make_unique<dimeClientInterface>(processName, server);
-		dime->init();
-	}
-	auto out=collector::trigger(time);
-	//figure out what to do with the data
-
-#pragma region var and name compile
-	std::string strv = "V";
-	std::vector<double> voltagec;
-	std::vector<std::string> voltagename;
-
-	std::string strang = "theta";
-	std::vector<double> anglec;
-	std::vector<std::string> anglename;
-
-	std::string strfreq = "freq";
-	std::vector<double> freqc;
-	std::vector<std::string> freqname;
-
-	std::string strreactive = "gen_reactive";
-	std::vector<double> reactivec;
-	std::vector<std::string> reactivename;
-
-	std::string strreal = "gen_real";
-	std::vector<double> realc;
-	std::vector<std::string> realname;
-
-	std::string strloadreac = "load_reactive";
-	std::vector<double> loadreacc;
-	std::vector<std::string> loadreacname;
-
-	std::string strloadreal = "load_real";
-	std::vector<double> loadrealc;
-	std::vector<std::string> loadrealname;
-
-	std::string stromega = "omega";
-	std::vector<double> omegac;
-	std::vector<std::string> omeganame;
-
-	std::string strpf = "pf_";
-	std::vector<double> pfc;
-	std::vector<std::string> pfname;
-
-	std::string stri = "I";
-	std::vector<double> Ic;
-	std::vector<std::string> Iname;
-
-	std::string strlp = "line_p";
-	std::vector<double> linepc;
-	std::vector<std::string> linepname;
-
-	std::string strlq = "line_q";
-	std::vector<double> lineqc;
-	std::vector<std::string> lineqname;
-
-	std::string strexc = "exc_syn";
-	std::vector<double> excc;
-	std::vector<std::string> excname;
-
-	std::string str1d = "e1d_syn";
-	std::vector<double> e1dc;
-	std::vector<std::string> e1dname;
-
-	std::string str2d = "e2d_syn";
-	std::vector<double> e2dc;
-	std::vector<std::string> e2dname;
-
-	std::string str1q = "e1q_syn";
-	std::vector<double> e1qc;
-	std::vector<std::string> e1qname;
-
-	std::string str2q = "e2q_syn";
-	std::vector<double> e2qc;
-	std::vector<std::string> e2qname;
-
-	//for each data determine who they are
-	for (size_t kk = 0; kk < points.size(); ++kk)
-	{
-		
-
-		
-
-
-		if (points[kk].colname.find(strv) != string::npos)
-		{
-			voltagec.push_back(data[kk]);
-			voltagename.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strlp) != string::npos)
-		{
-			linepc.push_back(data[kk]);
-			linepname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strang) != string::npos)
-		{
-			anglec.push_back(data[kk]);
-			anglename.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strfreq) != string::npos)
-		{
-			freqc.push_back(data[kk]);
-			freqname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strreactive) != string::npos)
-		{
-			reactivec.push_back(data[kk]);
-			reactivename.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strreal) != string::npos)
-		{
-		    realc.push_back(data[kk]);
-			realname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strloadreac) != string::npos)
-		{
-			loadreacc.push_back(data[kk]);
-			loadreacname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strloadreal) != string::npos)
-		{
-			loadrealc.push_back(data[kk]);
-			loadrealname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(stromega) != string::npos)
-		{
-			omegac.push_back(data[kk]);
-			omeganame.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strpf) != string::npos)
-		{
-			pfc.push_back(data[kk]);
-			pfname.push_back(points[kk].colname);
-		}
-		if (points[kk].colname.find(stri) != string::npos)
-		{
-			Ic.push_back(data[kk]);
-			Iname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strlq) != string::npos)
-		{
-			lineqc.push_back(data[kk]);
-			lineqname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(strexc) != string::npos)
-		{
-			excc.push_back(data[kk]);
-			excname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(str1d) != string::npos)
-		{
-			e1dc.push_back(data[kk]);
-			e1dname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(str2d) != string::npos)
-		{
-			e2dc.push_back(data[kk]);
-			e2dname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(str1q) != string::npos)
-		{
-			e1qc.push_back(data[kk]);
-			e1qname.push_back(points[kk].colname);
-		}
-
-		if (points[kk].colname.find(str2q) != string::npos)
-		{
-			e2qc.push_back(data[kk]);
-			e2qname.push_back(points[kk].colname);
-		}
-	}
-	std::vector<double> total;
-	std::vector<std::string> totalname;
-
-
-
-
-	total.insert(total.end(), voltagec.begin(), voltagec.end());
-	total.insert(total.end(), linepc.begin(), linepc.end());
-	total.insert(total.end(), freqc.begin(), freqc.end());
-	total.insert(total.end(), anglec.begin(), anglec.end());
-	total.insert(total.end(), reactivec.begin(), reactivec.end());
-	total.insert(total.end(), realc.begin(), realc.end());
-	total.insert(total.end(), loadreacc.begin(), loadreacc.end());
-	total.insert(total.end(), loadrealc.begin(), loadrealc.end());
-	total.insert(total.end(), omegac.begin(), omegac.end());
-	total.insert(total.end(), pfc.begin(), pfc.end());
-	total.insert(total.end(), Ic.begin(), Ic.end());
-	total.insert(total.end(), lineqc.begin(), lineqc.end());
-	total.insert(total.end(), excc.begin(), excc.end());
-	total.insert(total.end(), e1dc.begin(), e1dc.end());
-	total.insert(total.end(), e2dc.begin(), e2dc.end());
-	total.insert(total.end(), e1qc.begin(), e1qc.end());
-	total.insert(total.end(), e2qc.begin(), e2qc.end());
-	
-	totalname.insert(totalname.end(), voltagename.begin(), voltagename.end());
-	totalname.insert(totalname.end(), freqname.begin(), freqname.end());
-	totalname.insert(totalname.end(), linepname.begin(), linepname.end());
-	totalname.insert(totalname.end(), anglename.begin(), anglename.end());
-	totalname.insert(totalname.end(), reactivename.begin(), reactivename.end());
-	totalname.insert(totalname.end(), realname.begin(), realname.end());
-	totalname.insert(totalname.end(), loadreacname.begin(), loadreacname.end());
-	totalname.insert(totalname.end(), loadrealname.begin(), loadrealname.end());
-	totalname.insert(totalname.end(), omeganame.begin(), omeganame.end());
-	totalname.insert(totalname.end(), pfname.begin(), pfname.end());
-	totalname.insert(totalname.end(), Iname.begin(), Iname.end());
-	totalname.insert(totalname.end(), lineqname.begin(), lineqname.end());
-	totalname.insert(totalname.end(), excname.begin(), excname.end());
-	totalname.insert(totalname.end(), e1dname.begin(), e1dname.end());
-	totalname.insert(totalname.end(), e2dname.begin(), e2dname.end());
-	totalname.insert(totalname.end(), e1qname.begin(), e1qname.end());
-	totalname.insert(totalname.end(), e2qname.begin(), e2qname.end());
-	
-	for (size_t kk = 0; kk < points.size(); ++kk)
-	{
-		
-		Json::Value wrvar;
-		wrvar.append(total[kk]);
-		Varvgs.append(wrvar);
-
-
-
-		Json::Value wrvarname;
-		Json::Value wagain;
-		wrvarname.append(totalname[kk]);
-		wagain.append(wrvarname);
-		Varheader.append(wagain);
-		
-	}
-
-
-#pragma endregion
-
-
-#pragma region compile Idxvgs
-	int nbusvol = voltagec.size();
-	int nlinep = linepc.size();
-	int nbusfreq = freqc.size();
-	int nbustheta = anglec.size();
-	int nbusgenreactive = reactivec.size();
-	int nbusgenreal = realc.size();
-	int nbusloadreactive = loadreacc.size();
-	int nbusloadreal = loadrealc.size();
-	int nsynomega = omegac.size();
-	int nsyndelta = pfc.size();
-	int nlineI = Ic.size();
-	int nlineq = lineqc.size();
-	int nexcv = excc.size();
-	int nsyne1d = e1dc.size();
-	int nsyne2d = e2dc.size();
-	int nsyne1q = e1qc.size();
-	int nsyne2q = e2qc.size();
-
-
-	int linepend = idxfindend(nbusvol, nlinep);
-	int busfreqend = idxfindend(linepend, nbusfreq);
-	int busthetaend = idxfindend(busfreqend, nbustheta);
-	int busgenreactiveend = idxfindend(busthetaend, nbusgenreactive);
-	int busgenrealend = idxfindend(busgenreactiveend, nbusgenreal);
-	int busloadreactiveend = idxfindend(busgenrealend, nbusloadreactive);
-	int busloadrealend = idxfindend(busloadreactiveend, nbusloadreal);
-	int synomegaend = idxfindend(busloadrealend, nsynomega);
-	int syndeltaend = idxfindend(synomegaend, nsyndelta);
-	int LineIend = idxfindend(syndeltaend, nlineI);
-	int Lineqend = idxfindend(LineIend, nlineq);
-	int excend = idxfindend(Lineqend, nexcv);
-	int syne1d = idxfindend(excend, nsyne1d);
-	int syne2d = idxfindend(syne1d, nsyne2d);
-	int syne1q = idxfindend(syne2d, nsyne1q);
-	int syne2q = idxfindend(syne1q, nsyne2q);
-
-
-	Json::Value nbusvolk = idxvgsdoubleencod(1, nbusvol);
-	Json::Value nlinepk = idxvgsdoubleencod(nbusvol + 1, linepend);
-	Json::Value nbusfreqk = idxvgsdoubleencod(linepend + 1, busfreqend);
-	Json::Value nbusthetak = idxvgsdoubleencod(busfreqend + 1, busthetaend);
-	Json::Value nbusgenreactivek = idxvgsdoubleencod(busfreqend + 1, busgenreactiveend);
-	Json::Value nbusgenrealk = idxvgsdoubleencod(busgenreactiveend + 1, busgenrealend);
-	Json::Value nbusloadreactivelk = idxvgsdoubleencod(busgenrealend + 1, busloadreactiveend);
-	Json::Value nbusloadrealk = idxvgsdoubleencod(busloadreactiveend, busloadrealend);
-	Json::Value nsynomegaj = idxvgsdoubleencod(busloadrealend + 1, synomegaend);
-	Json::Value nsyndeltaj = idxvgsdoubleencod(synomegaend + 1, syndeltaend);
-	Json::Value nlineij = idxvgsdoubleencod(syndeltaend + 1, LineIend);
-	Json::Value nlineqj = idxvgsdoubleencod(LineIend + 1, Lineqend);
-	Json::Value nexc = idxvgsdoubleencod(Lineqend + 1, excend);
-	Json::Value ne1d = idxvgsdoubleencod(excend + 1, syne1d);
-	Json::Value ne2d = idxvgsdoubleencod(syne1d + 1, syne2d);
-	Json::Value ne1q = idxvgsdoubleencod(syne2d + 1, syne1q);
-	Json::Value ne2q = idxvgsdoubleencod(syne1q + 1, syne2q);
-
-
-
-#pragma endregion 
-
-
-
-	if (t == 0)
-	{
-	  dev_list = dime->get_devices();
-	}
-
-
-		for (int ii = 0; ii < dev_list.size(); ++ii)
-		{
-			if (t==0&&ii==0)
-			{
-				dime->send_sysname(Busnamed, "");
-				dime->send_Idxvgs(nbusvolk, nlinepk, nbusfreqk, nbusthetak, nbusgenreactivek, nbusgenrealk, nbusloadreactivelk, nbusloadrealk, nsynomegaj, nsyndeltaj, nlineij, nlineqj, nexc, ne1d, ne2d, ne1q, ne2q, "");
-				dime->send_varname(Varheader, "");
-				std::cout << "boradcast is finished" << std::endl;
-			}
-		    //	Sleep(1000); //broadcast;
-
-// find request var
-
-
-				if (t == 0)
-				{
-					devname.push_back(dime->sync());
-				}
-				//sync req;
-
-				Json::Value reqvarheader;
-				Json::Value reqvar;
-
-				for (int jj = 0; jj < idxreq[ii].size(); ++jj)
-				{
-					Json::Value inter;
-					inter.append(total[idxreq[ii][jj]]);
-					reqvar.append(inter);
-
-					Json::Value interh;
-					interh.append(totalname[idxreq[ii][jj]]);
-					reqvarheader.append(inter);
-				}
-
-				if (t == 0)
-				{
-					dime->send_sysparam(Busd, PQd, PVd, lined, nbus, nline, Genroud, Fsd, Swd, devname[ii]);
-					std::cout << "requested param is sended" << std::endl;
-					std::cout << "requested var is started to be sended" << std::endl;
-				}
-				//send sysparam
-
-
-
-				dime->send_reqvar(t, reqvar, reqvarheader, devname[ii]);
-				
-				//dime->send_var(t, Varvgs,dev_list[ii]);
-
-			
-
-		}
-	     //sync controlsig no matter from who 
-		//get controlsig until there is none
-		while (1)
-		{
-			auto controlsig = std::make_unique<controlsignal>();
-			int fg = dime->syncforcontrol(controlsig.get());
-			controlsignal ncon = *controlsig;
-			if (fg == 1)
-			{
-				queueforcon.push_back(ncon);
-			}
-			else
-			{
-				break;
-			}
-		}
-		if (!queueforcon.empty())
-		{
-			setcontrol(t);
-		}
-	return out;
+sysname2=sysname1;
+Busdata2=Busdata1;
+Loaddata2=Loaddata1;
+Branchdata2=branchdata1;
+Transformerdata2=transformerdata1;
+Generatordata2=Generatordata1;
+Fixshuntdata2=Fixshuntdata1;
+Baseinfor2 = Baseinfor1;
 }
 
-
-
-
-//compile the sysparam in order
-void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<std::string> Loaddata, std::vector<std::string> Generatordata, std::vector<std::string> Branchdata, std::vector<std::string> Transformerdata, std::vector <std::vector<double>> Genroudata, std::vector<std::string> Fixshuntdata,std::vector <std::string> sysname,std::vector<int> Baseinfor)
+//gain dyr info
+void dimeCollector::senddyninfo(std::vector <std::vector<double>> Genroudata1)
 {
-	std::unique_ptr<dimeClientInterface> dime = std::make_unique<dimeClientInterface>("", "");
-	dime->init();
-	nbus = Busdata.size();
+	Genroudata2 = Genroudata1;
+}
+
+//compile the sysparam from raw and dyr in order and into json
+void dimeCollector::encodesysparam(std::vector<std::string> Busdata, std::vector<std::string> Loaddata, std::vector<std::string> Generatordata, std::vector<std::string> Branchdata, std::vector<std::string> Transformerdata, std::vector <std::vector<double>> Genroudata, std::vector<std::string> Fixshuntdata, std::vector <std::string> sysname, std::vector<int> Baseinfor)
+{
+	std::unique_ptr<dimeClientInterface> dime1 = std::make_unique<dimeClientInterface>("", "");
+	dime1->init();
+	nbus = static_cast<int> (Busdata.size());
 	nline = Branchdata.size() + (Transformerdata.size() / 4);
 
 
@@ -634,9 +256,9 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 		Json::Value wagain;
 		wsysname.append(sysname[kk]);
 		wagain.append(wsysname);
-	    Busnamed.append(wagain);
+		Busnamed.append(wagain);
 	}
-	
+
 
 
 
@@ -647,7 +269,7 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 		std::vector<double> interv;
 		for (int ii = 0; ii < Busdata[kk].length(); ++ii)
 		{
-			
+
 			if (businter.find(",") != string::npos)
 			{
 				int nu = businter.find_first_of(',');
@@ -674,17 +296,17 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 				interv.push_back(indexc);
 				break;
 			}
-			
+
 		}
 		arr.push_back(interv);
 	}
 	for (size_t kk = 0; kk < Busdata.size(); ++kk)
 	{
 		Json::Value Busk;
-		if (arr[kk][3]==3)
+		if (arr[kk][3] == 3)
 		{
 			swidx = arr[kk][0];
-			swv= arr[kk][7];
+			swv = arr[kk][7];
 		}
 		int num1[6] = { 0,2,7,8,4,5, };
 		for each(int i in num1)
@@ -712,7 +334,7 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 					istringstream iss(tempc);
 					double indexc;
 					iss >> indexc;
-				    interv.push_back(indexc);
+					interv.push_back(indexc);
 					loadinter = loadinter.substr(nu + 1, Loaddata[kk].length());
 					op = op + 1;
 				}
@@ -789,7 +411,7 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 
 				break;
 			}
-	
+
 		}
 		pvrr.push_back(interv);
 	}
@@ -808,10 +430,10 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 			PVk.append(pvinter[ii]);
 		}
 		PVd.append(PVk);
-		
+
 		if (pvidx == swidx)
 		{
-			double swinter[13]= { swidx,pvrr[kk][8],arr[pvidx - 1][2],swv,arr[pvidx - 1][7],qmax,qmin,maxv,minv,1,1,1,pvrr[kk][14] };
+			double swinter[13] = { swidx,pvrr[kk][8],arr[pvidx - 1][2],swv,arr[pvidx - 1][7],qmax,qmin,maxv,minv,1,1,1,pvrr[kk][14] };
 			Json::Value swk;
 			Json::Value swkk;
 			for (int ii = 0; ii < 13; ++ii)
@@ -831,7 +453,7 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 		std::vector <double> interv;
 		for (int ii = 0; ii < Branchdata[kk].length(); ++ii)
 		{
-			
+
 			if (branchinter.find(",") != string::npos)
 			{
 				int nu = branchinter.find_first_of(',');
@@ -860,11 +482,11 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 				interv.push_back(indexc);
 				break;
 			}
-			
+
 		}
 		branchrr.push_back(interv);
 	}
-	
+
 	std::vector<std::vector<double>> transrr;
 
 	for (size_t kk = 0; kk < Transformerdata.size(); ++kk)
@@ -998,9 +620,9 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 		double vn = arr[fsidx - 1][2];
 		double freq = Baseinfor[1];
 		double g = fshuntrr[kk][3] / mva;
-		double b= fshuntrr[kk][4] / mva;
+		double b = fshuntrr[kk][4] / mva;
 		double status = fshuntrr[kk][2];
-		double fsinter[7] = {fsidx,mva,vn,freq,g,b,status};
+		double fsinter[7] = { fsidx,mva,vn,freq,g,b,status };
 		for (int ii = 0; ii < 7; ++ii)
 		{
 			fsk.append(fsinter[ii]);
@@ -1053,6 +675,433 @@ void dimeCollector::sendsysparam(std::vector<std::string> Busdata, std::vector<s
 
 	//dime->send_sysparam(Busd, PQd, PVd, lined, nbus, nline, Genroud,Fsd,Swd, "SE");
 }
+
+//compile idxvgs and varheader
+void dimeCollector::total_idxvgs(Json::Value &nbusvolk,Json::Value &nlinepk,Json::Value &nbusfreqk,Json::Value &nbusthetak,Json::Value &nbusgenreactivek,Json::Value &nbusgenrealk,Json::Value &nbusloadreactivelk,Json::Value &nbusloadrealk,Json::Value &nsynomegaj,Json::Value &nsyndeltaj,Json::Value &nlineij,Json::Value &nlineqj,Json::Value &nexc,Json::Value &ne1d,Json::Value &ne2d,Json::Value &ne1q,Json::Value &ne2q ) 
+{
+#pragma region var and name compile
+	std::string strv = "V";
+	std::vector<double> voltagec;
+	std::vector<std::string> voltagename;
+
+	std::string strang = "theta";
+	std::vector<double> anglec;
+	std::vector<std::string> anglename;
+
+	std::string strfreq = "freq";
+	std::vector<double> freqc;
+	std::vector<std::string> freqname;
+
+	std::string strreactive = "gen_reactive";
+	std::vector<double> reactivec;
+	std::vector<std::string> reactivename;
+
+	std::string strreal = "gen_real";
+	std::vector<double> realc;
+	std::vector<std::string> realname;
+
+	std::string strloadreac = "load_reactive";
+	std::vector<double> loadreacc;
+	std::vector<std::string> loadreacname;
+
+	std::string strloadreal = "load_real";
+	std::vector<double> loadrealc;
+	std::vector<std::string> loadrealname;
+
+	std::string stromega = "omega";
+	std::vector<double> omegac;
+	std::vector<std::string> omeganame;
+
+	std::string strpf = "pf_";
+	std::vector<double> pfc;
+	std::vector<std::string> pfname;
+
+	std::string stri = "I";
+	std::vector<double> Ic;
+	std::vector<std::string> Iname;
+
+	std::string strlp = "line_p";
+	std::vector<double> linepc;
+	std::vector<std::string> linepname;
+
+	std::string strlq = "line_q";
+	std::vector<double> lineqc;
+	std::vector<std::string> lineqname;
+
+	std::string strexc = "exc_syn";
+	std::vector<double> excc;
+	std::vector<std::string> excname;
+
+	std::string str1d = "e1d_syn";
+	std::vector<double> e1dc;
+	std::vector<std::string> e1dname;
+
+	std::string str2d = "e2d_syn";
+	std::vector<double> e2dc;
+	std::vector<std::string> e2dname;
+
+	std::string str1q = "e1q_syn";
+	std::vector<double> e1qc;
+	std::vector<std::string> e1qname;
+
+	std::string str2q = "e2q_syn";
+	std::vector<double> e2qc;
+	std::vector<std::string> e2qname;
+
+	//for each data determine who they are
+	for (size_t kk = 0; kk < points.size(); ++kk)
+	{
+
+
+
+
+
+		if (points[kk].colname.find(strv) != string::npos)
+		{
+			voltagec.push_back(data[kk]);
+			voltagename.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strlp) != string::npos)
+		{
+			linepc.push_back(data[kk]);
+			linepname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strang) != string::npos)
+		{
+			anglec.push_back(data[kk]);
+			anglename.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strfreq) != string::npos)
+		{
+			freqc.push_back(data[kk]);
+			freqname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strreactive) != string::npos)
+		{
+			reactivec.push_back(data[kk]);
+			reactivename.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strreal) != string::npos)
+		{
+			realc.push_back(data[kk]);
+			realname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strloadreac) != string::npos)
+		{
+			loadreacc.push_back(data[kk]);
+			loadreacname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strloadreal) != string::npos)
+		{
+			loadrealc.push_back(data[kk]);
+			loadrealname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(stromega) != string::npos)
+		{
+			omegac.push_back(data[kk]);
+			omeganame.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strpf) != string::npos)
+		{
+			pfc.push_back(data[kk]);
+			pfname.push_back(points[kk].colname);
+		}
+		if (points[kk].colname.find(stri) != string::npos)
+		{
+			Ic.push_back(data[kk]);
+			Iname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strlq) != string::npos)
+		{
+			lineqc.push_back(data[kk]);
+			lineqname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(strexc) != string::npos)
+		{
+			excc.push_back(data[kk]);
+			excname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(str1d) != string::npos)
+		{
+			e1dc.push_back(data[kk]);
+			e1dname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(str2d) != string::npos)
+		{
+			e2dc.push_back(data[kk]);
+			e2dname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(str1q) != string::npos)
+		{
+			e1qc.push_back(data[kk]);
+			e1qname.push_back(points[kk].colname);
+		}
+
+		if (points[kk].colname.find(str2q) != string::npos)
+		{
+			e2qc.push_back(data[kk]);
+			e2qname.push_back(points[kk].colname);
+		}
+	}
+
+
+
+
+
+	total.insert(total.end(), voltagec.begin(), voltagec.end());
+	total.insert(total.end(), linepc.begin(), linepc.end());
+	total.insert(total.end(), freqc.begin(), freqc.end());
+	total.insert(total.end(), anglec.begin(), anglec.end());
+	total.insert(total.end(), reactivec.begin(), reactivec.end());
+	total.insert(total.end(), realc.begin(), realc.end());
+	total.insert(total.end(), loadreacc.begin(), loadreacc.end());
+	total.insert(total.end(), loadrealc.begin(), loadrealc.end());
+	total.insert(total.end(), omegac.begin(), omegac.end());
+	total.insert(total.end(), pfc.begin(), pfc.end());
+	total.insert(total.end(), Ic.begin(), Ic.end());
+	total.insert(total.end(), lineqc.begin(), lineqc.end());
+	total.insert(total.end(), excc.begin(), excc.end());
+	total.insert(total.end(), e1dc.begin(), e1dc.end());
+	total.insert(total.end(), e2dc.begin(), e2dc.end());
+	total.insert(total.end(), e1qc.begin(), e1qc.end());
+	total.insert(total.end(), e2qc.begin(), e2qc.end());
+
+	totalname.insert(totalname.end(), voltagename.begin(), voltagename.end());
+	totalname.insert(totalname.end(), freqname.begin(), freqname.end());
+	totalname.insert(totalname.end(), linepname.begin(), linepname.end());
+	totalname.insert(totalname.end(), anglename.begin(), anglename.end());
+	totalname.insert(totalname.end(), reactivename.begin(), reactivename.end());
+	totalname.insert(totalname.end(), realname.begin(), realname.end());
+	totalname.insert(totalname.end(), loadreacname.begin(), loadreacname.end());
+	totalname.insert(totalname.end(), loadrealname.begin(), loadrealname.end());
+	totalname.insert(totalname.end(), omeganame.begin(), omeganame.end());
+	totalname.insert(totalname.end(), pfname.begin(), pfname.end());
+	totalname.insert(totalname.end(), Iname.begin(), Iname.end());
+	totalname.insert(totalname.end(), lineqname.begin(), lineqname.end());
+	totalname.insert(totalname.end(), excname.begin(), excname.end());
+	totalname.insert(totalname.end(), e1dname.begin(), e1dname.end());
+	totalname.insert(totalname.end(), e2dname.begin(), e2dname.end());
+	totalname.insert(totalname.end(), e1qname.begin(), e1qname.end());
+	totalname.insert(totalname.end(), e2qname.begin(), e2qname.end());
+
+	for (size_t kk = 0; kk < points.size(); ++kk)
+	{
+
+		Json::Value wrvar;
+		wrvar.append(total[kk]);
+		Varvgs.append(wrvar);
+
+
+
+		Json::Value wrvarname;
+		Json::Value wagain;
+		wrvarname.append(totalname[kk]);
+		wagain.append(wrvarname);
+		Varheader.append(wagain);
+
+	}
+
+
+#pragma endregion
+
+
+#pragma region compile Idxvgs
+	int nbusvol = voltagec.size();
+	int nlinep = linepc.size();
+	int nbusfreq = freqc.size();
+	int nbustheta = anglec.size();
+	int nbusgenreactive = reactivec.size();
+	int nbusgenreal = realc.size();
+	int nbusloadreactive = loadreacc.size();
+	int nbusloadreal = loadrealc.size();
+	int nsynomega = omegac.size();
+	int nsyndelta = pfc.size();
+	int nlineI = Ic.size();
+	int nlineq = lineqc.size();
+	int nexcv = excc.size();
+	int nsyne1d = e1dc.size();
+	int nsyne2d = e2dc.size();
+	int nsyne1q = e1qc.size();
+	int nsyne2q = e2qc.size();
+
+
+	int linepend = idxfindend(nbusvol, nlinep);
+	int busfreqend = idxfindend(linepend, nbusfreq);
+	int busthetaend = idxfindend(busfreqend, nbustheta);
+	int busgenreactiveend = idxfindend(busthetaend, nbusgenreactive);
+	int busgenrealend = idxfindend(busgenreactiveend, nbusgenreal);
+	int busloadreactiveend = idxfindend(busgenrealend, nbusloadreactive);
+	int busloadrealend = idxfindend(busloadreactiveend, nbusloadreal);
+	int synomegaend = idxfindend(busloadrealend, nsynomega);
+	int syndeltaend = idxfindend(synomegaend, nsyndelta);
+	int LineIend = idxfindend(syndeltaend, nlineI);
+	int Lineqend = idxfindend(LineIend, nlineq);
+	int excend = idxfindend(Lineqend, nexcv);
+	int syne1d = idxfindend(excend, nsyne1d);
+	int syne2d = idxfindend(syne1d, nsyne2d);
+	int syne1q = idxfindend(syne2d, nsyne1q);
+	int syne2q = idxfindend(syne1q, nsyne2q);
+
+
+	nbusvolk = idxvgsdoubleencod(1, nbusvol);
+	nlinepk = idxvgsdoubleencod(nbusvol + 1, linepend);
+	nbusfreqk = idxvgsdoubleencod(linepend + 1, busfreqend);
+	nbusthetak = idxvgsdoubleencod(busfreqend + 1, busthetaend);
+	nbusgenreactivek = idxvgsdoubleencod(busfreqend + 1, busgenreactiveend);
+	nbusgenrealk = idxvgsdoubleencod(busgenreactiveend + 1, busgenrealend);
+	nbusloadreactivelk = idxvgsdoubleencod(busgenrealend + 1, busloadreactiveend);
+    nbusloadrealk = idxvgsdoubleencod(busloadreactiveend, busloadrealend);
+	nsynomegaj = idxvgsdoubleencod(busloadrealend + 1, synomegaend);
+	nsyndeltaj = idxvgsdoubleencod(synomegaend + 1, syndeltaend);
+	nlineij = idxvgsdoubleencod(syndeltaend + 1, LineIend);
+	nlineqj = idxvgsdoubleencod(LineIend + 1, Lineqend);
+	nexc = idxvgsdoubleencod(Lineqend + 1, excend);
+    ne1d = idxvgsdoubleencod(excend + 1, syne1d);
+    ne2d = idxvgsdoubleencod(syne1d + 1, syne2d);
+ne1q = idxvgsdoubleencod(syne2d + 1, syne1q);
+ne2q = idxvgsdoubleencod(syne1q + 1, syne2q);
+
+
+
+#pragma endregion 
+}
+
+//orgnize how to send to clients
+change_code dimeCollector::trigger(coreTime time)
+{
+	double t = time;
+
+	Json::Value nbusvolk;
+	Json::Value nlinepk;
+	Json::Value nbusfreqk;
+	Json::Value nbusthetak;
+	Json::Value nbusgenreactivek;
+	Json::Value nbusgenrealk;
+	Json::Value nbusloadreactivelk;
+	Json::Value nbusloadrealk;
+	Json::Value nsynomegaj;
+	Json::Value nsyndeltaj;
+	Json::Value nlineij;
+	Json::Value nlineqj;
+	Json::Value nexc;
+	Json::Value ne1d;
+	Json::Value ne2d;
+	Json::Value ne1q;
+	Json::Value ne2q;
+
+
+	encodesysparam(Busdata2,Loaddata2,Generatordata2,Branchdata2,Transformerdata2, Genroudata2, Fixshuntdata2,sysname2,Baseinfor2);
+	total_idxvgs(nbusvolk,nlinepk,nbusfreqk,nbusthetak,nbusgenreactivek,nbusgenrealk,nbusloadreactivelk,nbusloadrealk,nsynomegaj,nsyndeltaj,nlineij,nlineqj,nexc,ne1d,ne2d,ne1q,ne2q);
+
+	if (!dime)
+	{
+		dime = std::make_unique<dimeClientInterface>(processName, server);
+		dime->init();
+	}
+	auto out=collector::trigger(time);
+	//figure out what to do with the data
+
+
+
+
+
+	if (t == 0)
+	{
+	  dev_list = dime->get_devices();
+	}
+
+
+		for (int ii = 0; ii < dev_list.size(); ++ii)
+		{
+			if (t==0&&ii==0)
+			{
+				dime->send_sysname(Busnamed, "");
+				dime->send_Idxvgs(nbusvolk, nlinepk, nbusfreqk, nbusthetak, nbusgenreactivek, nbusgenrealk, nbusloadreactivelk, nbusloadrealk, nsynomegaj, nsyndeltaj, nlineij, nlineqj, nexc, ne1d, ne2d, ne1q, ne2q, "");
+				dime->send_varname(Varheader, "");
+				std::cout << "boradcast is finished" << std::endl;
+			}
+		    //	Sleep(1000); //broadcast;
+
+// find request var
+
+
+				if (t == 0)
+				{
+					devname.push_back(dime->sync());
+				}
+				//sync req;
+
+				Json::Value reqvarheader;
+				Json::Value reqvar;
+				//prepare data
+				for (int jj = 0; jj < idxreq[ii].size(); ++jj)
+				{
+					Json::Value inter;
+					inter.append(total[idxreq[ii][jj]]);
+					reqvar.append(inter);
+
+					Json::Value interh;
+					interh.append(totalname[idxreq[ii][jj]]);
+					reqvarheader.append(inter);
+				}
+
+				if (t == 0)
+				{
+					dime->send_sysparam(Busd, PQd, PVd, lined, nbus, nline, Genroud, Fsd, Swd, devname[ii]);
+					std::cout << "requested param is sended" << std::endl;
+					std::cout << "requested var is started to be sended" << std::endl;
+				}
+				//send sysparam
+
+
+
+				dime->send_reqvar(t, reqvar, reqvarheader, devname[ii]);
+				
+				//dime->send_var(t, Varvgs,dev_list[ii]);
+
+			
+
+		}
+	     //sync controlsig no matter from who 
+		//get controlsig until there is none
+		while (1)
+		{
+			auto controlsig = std::make_unique<controlsignal>();
+			int fg = dime->syncforcontrol(controlsig.get());
+			controlsignal ncon = *controlsig;
+			if (fg == 1)
+			{
+				queueforcon.push_back(ncon);
+			}
+			else
+			{
+				break;
+			}
+		}
+		if (!queueforcon.empty())
+		{
+			setcontrol(t);
+		}
+	return out;
+}
+
+
+
+
 
 void dimeCollector::set(const std::string &param, double val)
 {
