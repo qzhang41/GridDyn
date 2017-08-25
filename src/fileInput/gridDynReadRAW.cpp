@@ -551,7 +551,13 @@ void rawReadBus (gridBus *bus, const std::string &line, basicReaderInfo &opt)
     int type;
 
     auto strvec = splitline (line);
-    // get the bus name
+	//determine if its bus cordinate is added
+	if (strvec.size() == 15)
+	{
+		strvec.pop_back();
+		strvec.pop_back();
+	}
+	// get the bus name
     auto temp = trim (strvec[0]);
     auto temp2 = trim (removeQuotes (strvec[1]));
   sysname.push_back(temp2);

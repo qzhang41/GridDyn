@@ -81,7 +81,7 @@ dimeCollector::~dimeCollector()
 	{
 		dime->close();
 	}
-	std::cout << "all requested vars at all time are sended" << std::endl;
+
 }
 
 std::shared_ptr<collector> dimeCollector::clone(std::shared_ptr<collector> gr) const
@@ -308,7 +308,7 @@ void dimeCollector::encodesysparam(std::vector<std::string> Busdata, std::vector
 			swidx = arr[kk][0];
 			swv = arr[kk][7];
 		}
-		int num1[6] = { 0,2,7,8,4,5, };
+		int num1[8] = { 0,2,7,8,4,5,13,14 };
 		for each(int i in num1)
 		{
 			Busk.append(arr[kk][i]);
@@ -1004,8 +1004,6 @@ change_code dimeCollector::trigger(coreTime time)
 	Json::Value ne2q;
 
 
-	encodesysparam(Busdata2,Loaddata2,Generatordata2,Branchdata2,Transformerdata2, Genroudata2, Fixshuntdata2,sysname2,Baseinfor2);
-	total_idxvgs(nbusvolk,nlinepk,nbusfreqk,nbusthetak,nbusgenreactivek,nbusgenrealk,nbusloadreactivelk,nbusloadrealk,nsynomegaj,nsyndeltaj,nlineij,nlineqj,nexc,ne1d,ne2d,ne1q,ne2q);
 
 	if (!dime)
 	{
@@ -1015,6 +1013,8 @@ change_code dimeCollector::trigger(coreTime time)
 	auto out=collector::trigger(time);
 	//figure out what to do with the data
 
+	encodesysparam(Busdata2, Loaddata2, Generatordata2, Branchdata2, Transformerdata2, Genroudata2, Fixshuntdata2, sysname2, Baseinfor2);
+	total_idxvgs(nbusvolk, nlinepk, nbusfreqk, nbusthetak, nbusgenreactivek, nbusgenrealk, nbusloadreactivelk, nbusloadrealk, nsynomegaj, nsyndeltaj, nlineij, nlineqj, nexc, ne1d, ne2d, ne1q, ne2q);
 
 
 
