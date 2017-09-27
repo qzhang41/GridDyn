@@ -803,7 +803,7 @@ void rawReadGen (Generator *gen, const std::string &line, basicReaderInfo &opt)
             // for raw files the bus doesn't necessarily set a control point it comes from the generator, so we
             // have to set it here.
             gen->getParent ()->set ("vtarget", V);
-            gen->getParent ()->set ("v", V);
+            gen->getParent ()->set ("voltage", V);
         }
         else
         {
@@ -1406,10 +1406,15 @@ void rawReadSwitchedShunt (coreObject *parentObject,
     }
 
     int mode = numeric_conversion<int> (strvec[1], 0);
-    double high = numeric_conversion<double> (strvec[2], 0.0);
-    double low = numeric_conversion<double> (strvec[3], 0.0);
+   // double high = numeric_conversion<double> (strvec[2], 0.0);
+   // double low = numeric_conversion<double> (strvec[3], 0.0);
+
+	double high = numeric_conversion<double>(strvec[4], 0.0);
+	double low = numeric_conversion<double>(strvec[5], 0.0);
+
     // get the controlled bus
-    int cbus = numeric_conversion<int> (strvec[4], -1);
+    //int cbus = numeric_conversion<int> (strvec[4], -1);
+	int cbus = numeric_conversion<int>(strvec[6], -1);
 
     if (cbus < 0)
     {
@@ -1454,7 +1459,7 @@ void rawReadSwitchedShunt (coreObject *parentObject,
             ld->setControlBus (rbus);
         }
 
-        temp = numeric_conversion<double> (strvec[5], 0.0);
+        temp = numeric_conversion<double> (strvec[7], 0.0);
         if (temp > 0)
         {
             ld->set ("participation", temp / 100.0);
@@ -1521,7 +1526,8 @@ void rawReadSwitchedShunt (coreObject *parentObject,
         break;
     }
     // load the switched shunt blocks
-    int start = 7;
+   // int start = 7;
+	int start = 9;
     if (opt.version <= 27)
     {
         start = 5;
@@ -1542,6 +1548,7 @@ void rawReadSwitchedShunt (coreObject *parentObject,
         }
     }
     // set the initial value
+	
     auto initVal = numeric_conversion<double> (strvec[start], 0.0);
 
     ld->set ("yq", -initVal, MVAR);

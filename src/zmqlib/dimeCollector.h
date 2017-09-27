@@ -50,7 +50,9 @@ public:
 
 	void senddyninfo(std::vector<std::vector<double>> Genroudata);
 
-	void total_idxvgs(Json::Value & nbusvolk, Json::Value & nlinepk, Json::Value & nbusfreqk, Json::Value & nbusthetak, Json::Value & nbusgenreactivek, Json::Value & nbusgenrealk, Json::Value & nbusloadreactivelk, Json::Value & nbusloadrealk, Json::Value & nsynomegaj, Json::Value & nsyndeltaj, Json::Value & nlineij, Json::Value & nlineqj, Json::Value & nexc, Json::Value & ne1d, Json::Value & ne2d, Json::Value & ne1q, Json::Value & ne2q);
+
+	//void total_idxvgs(Json::Value & nbusvolk, Json::Value & nlinepk, Json::Value & nbusfreqk, Json::Value & nbusthetak, Json::Value & nbusgenreactivek, Json::Value & nbusgenrealk, Json::Value & nbusloadreactivelk, Json::Value & nbusloadrealk, Json::Value & nsynomegaj, Json::Value & nsyndeltaj, Json::Value & nlineij, Json::Value & nlineqj, Json::Value & nexc, Json::Value & ne1d, Json::Value & ne2d, Json::Value & ne1q, Json::Value & ne2q);
+	void total_idxvgs(std::vector<std::string>& nbusvolk, std::vector<std::string>& nlinepk, std::vector<std::string>& nbusfreqk, std::vector<std::string>& nbusthetak, std::vector<std::string>& nbusgenreactivek, std::vector<std::string>& nbusgenrealk, std::vector<std::string>& nbusloadreactivelk, std::vector<std::string>& nbusloadrealk, std::vector<std::string>& nsynomegaj, std::vector<std::string>& nsyndeltaj, std::vector<std::string>& nlineij, std::vector<std::string>& nlineqj, std::vector<std::string>& nexc, std::vector<std::string>& ne1d, std::vector<std::string>& ne2d, std::vector<std::string>& ne1q, std::vector<std::string>& ne2q);
 
 
 
@@ -60,6 +62,7 @@ public:
 
 	void encodesysparam(std::vector<std::string> Busdata, std::vector<std::string> Loaddata, std::vector<std::string> Generatordata, std::vector<std::string> Branchdata, std::vector<std::string> Transformerdata, std::vector<std::vector<double>> Genroudata, std::vector<std::string> Fixshuntdata, std::vector<std::string> sysname, std::vector<int> Baseinfor);
 
+	
 	void set(const std::string &param, double val) override;
 	void set(const std::string &param, const std::string &val) override;
 
