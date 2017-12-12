@@ -342,7 +342,9 @@ void dimeCollector::encodesysparam(std::vector<std::string> Busdata, std::vector
 				}
 				else
 				{
-					double indexc = std::stoul(businter);
+					istringstream iss(businter);
+					double indexc;
+					iss >> indexc;
 					interv.push_back(indexc);
 					break;
 				}
@@ -1408,6 +1410,8 @@ change_code dimeCollector::trigger(coreTime time)
 					reqvarheader.append(interh);
 
 				}
+
+
 				std::string reqvars= encodedoubletou8(reqvar);
 				if (t == 0)
 				{

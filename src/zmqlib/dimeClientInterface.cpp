@@ -512,6 +512,22 @@ void encodeVarheader(Json::Value &data, Json::Value Varheader)
 void encodesysname(Json::Value &data, Json::Value sysname)
 {
 	Json::Value re;
+/*	Json::Value err;
+	std::vector<double> rx;
+	rx.push_back(1);
+	rx.push_back(2);
+	std::vector<double> rx1;
+	rx1.push_back(2);
+	rx1.push_back(1);
+	std::vector<std::string> jj;
+	jj.push_back(encodedoubletou8(rx));
+	jj.push_back(encodedoubletou8(rx1));
+	err = u8stojson(jj);
+
+	re["test"] = err;
+	*/
+
+
 	re["Bus"] = sysname;
 
 	Json::FastWriter fw;
@@ -531,6 +547,8 @@ void encodesysparam(Json::Value &data, std::vector <std::string> BUSd, std::vect
 	Json::Value re1;
 	for (int ii = 0; ii < param.size(); ++ii)
 	{
+
+
 		if (param[ii] == "Bus")
 		{
 			re1["Bus"] = u8stojson(BUSd);
@@ -545,7 +563,7 @@ void encodesysparam(Json::Value &data, std::vector <std::string> BUSd, std::vect
 		}
 		if (param[ii] == "Line")
 		{
-			re1["line"] = u8stojson(lined);
+			re1["Line"] = u8stojson(lined);
 		}
 		if (param[ii] == "nbus")
 		{
@@ -557,15 +575,15 @@ void encodesysparam(Json::Value &data, std::vector <std::string> BUSd, std::vect
 		}
 		if (param[ii] == "Syn")
 		{
-			re1["syn"] = u8stojson(Genroud);
+			re1["Syn"] = u8stojson(Genroud);
 		}
 		if (param[ii] == "Fixshunt")
 		{
-			re1["Fixshunt"] = u8stojson(Fsd);
+			re1["Shunt"] = u8stojson(Fsd);
 		}
 		if (param[ii] == "Sw")
 		{
-			re1["Sw"] = u8stojson(Swd);
+			re1["SW"] = u8stojson(Swd);
 		}
 	}
 
@@ -593,11 +611,12 @@ void encodeIdxvgs(Json::Value &data, std::vector<std::string> nbusvolk, std::vec
 	Json::Value bus;
 
 	bus["V"] = u8stojson(nbusvolk);
-	bus["freq"] = u8stojson(nbusfreqk);
-	bus["loadp"] = u8stojson(nbusloadrealk);
-	bus["loadq"] = u8stojson(nbusloadreactivelk);
-	bus["genp"] = u8stojson(nbusgenrealk);
-	bus["genq"] = u8stojson(nbusgenreactivek);
+	bus["theta"] = u8stojson(nbusthetak);
+	bus["w_Busfreq"] = u8stojson(nbusfreqk);
+	bus["P"] = u8stojson(nbusloadrealk);
+	bus["Q"] = u8stojson(nbusloadreactivelk);
+	//bus["genp"] = u8stojson(nbusgenrealk);
+	//bus["genq"] = u8stojson(nbusgenreactivek);
 
 	line["I"] = u8stojson(nlineij);
 	line["p"] = u8stojson(nlinepk);
@@ -615,7 +634,7 @@ void encodeIdxvgs(Json::Value &data, std::vector<std::string> nbusvolk, std::vec
 	wr["Syn"] = syni;
 	wr["Line"] = line;
 	wr["Bus"] = bus;
-	wr["exc"] = exc;
+	wr["Exc"] = exc;
 
 
 	Json::FastWriter fw;
@@ -952,7 +971,6 @@ void dimeClientInterface::send_reqvar(int coutn,double t,std::string reqvar,std:
 	Json::Value outgoing;
 	Json::FastWriter fw;
 	outgoing["command"] = (recipient.empty()) ? "broadcast" : "send";
-
 	outgoing["name"] = namefor;
 	outgoing["args"] = "";
 
