@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--xml file to test matdyn execution-->
+<griddyn name="test1" version="0.0.1">
+   <import file="./IEEE39.raw"/>
+   <import file="./IEEE39.dyr"/>
+
+<!-- <event> -->
+<!-- <target>LINK#151</target> -->
+<!-- <field>fault</field> -->
+<!-- <value>0.5,-1</value> -->
+<!-- <time>1,1.3</time> -->
+<!-- </event> -->
+
+<event>
+<target>LINK#1</target>
+<field>fault</field>
+<value>0</value>
+<time>1.3</time>
+</event>
+
+
+<recorder field="frequency; voltage; loss" period=0.01>
+   <file>IEEE39.csv</file>
+   </recorder>
+   <timestart>0</timestart>
+   <timestop>50</timestop>
+</griddyn>
