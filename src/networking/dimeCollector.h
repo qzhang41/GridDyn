@@ -13,6 +13,7 @@
 #ifndef DIME_COLLECTOR_HEADER_
 #define DIME_COLLECTOR_HEADER_
 
+#include "Area.h"
 #include "griddyn/measurement/collector.h"
 #include "core/coreObject.h"
 class dimeClientInterface;
@@ -43,6 +44,8 @@ class dimeCollector : public collector
 
     virtual const std::string &getSinkName () const override;
     coreObject *m_obj = nullptr;  //!< the target object of the event
+
+	void sendbus (Area *gdbus_f);
 };
 }  // namespace dimeLib
 }  // namespace griddyn

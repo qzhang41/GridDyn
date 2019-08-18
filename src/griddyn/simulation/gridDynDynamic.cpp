@@ -9,6 +9,8 @@
  * For details, see the LICENSE file.
  * LLNS Copyright End
  */
+#include "networking/dimeCollector.h"
+
 #include "../events/Event.h"
 
 #include "../gridDynSimulation.h"
@@ -350,6 +352,14 @@ int gridDynSimulation::dynamicDAE (coreTime tStop)
         // transmit the current state to the various objects for updates and recorders
         setState (currentTime, dynData->state_data (), dynData->deriv_data (), sMode);
         updateLocalCache ();
+
+		gridDynSimulation *gdss;  // let dimecollector do the control
+        gdss = s_instance.load (std::memory_order_relaxed);
+        griddyn::Area *gdbus;
+        gdbus = s_instance.load (std::memory_order_relaxed);
+        griddyn::dimeLib::dimeCollector dime_sig;
+        dime_sig.sendbus (gdbus);
+
         auto ret = EvQ->executeEvents (currentTime);
         if (ret > change_code::non_state_change)
         {

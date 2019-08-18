@@ -10,6 +10,7 @@
  * LLNS Copyright End
  */
 
+#include "Area.h"
 #include "dimeCollector.h"
 #include "dimeClientInterface.h"
 #include <iostream>
@@ -18,6 +19,8 @@ namespace griddyn
 {
 namespace dimeLib
 {
+static Area *gdbus;
+
 dimeCollector::dimeCollector (coreTime time0, coreTime period) : collector (time0, period) {}
 
 dimeCollector::dimeCollector (const std::string &collectorName) : collector (collectorName) {}
@@ -48,6 +51,13 @@ void dimeCollector::cloneTo (collector *col) const
     dc->processName = processName;
 }
 
+void dimeCollector::sendbus (Area *gdbus_f)
+{
+	//Area *gdbus_b; 
+	gdbus = gdbus_f;
+}
+
+
 change_code dimeCollector::trigger (coreTime time)
 {
     if (!dime)
@@ -73,7 +83,7 @@ change_code dimeCollector::trigger (coreTime time)
             dimeClientInterface::DDC_list DDC_command = dime->get_DR_cmd ();
         }
     }
-    //m_obj->set ("p", 0.4);
+
     return out;
 }
 
