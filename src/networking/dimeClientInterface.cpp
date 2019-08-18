@@ -11,7 +11,9 @@
  */
 
 #include "dimeClientInterface.h"
+#include "utilities/base64.h"
 #include "zmqLibrary/zmqContextManager.h"
+#include <iostream>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -34,7 +36,7 @@ dimeClientInterface::dimeClientInterface (const std::string &dimeName, const std
 #endif
     }
 }
-
+dimeClientInterface::DDC_list DDC_command;
 dimeClientInterface::~dimeClientInterface () = default;
 
 void dimeClientInterface::init ()
@@ -50,13 +52,17 @@ void dimeClientInterface::init ()
     outgoing["listen_to_events"] = false;
 
     std::stringstream ss;
-    writer->write(outgoing, &ss);
 
-    socket->send (ss.str());
+    Json_gd::FastWriter fw;
+    std::string out = fw.write (outgoing);
+
+    // writer->write(outgoing, &ss);
+
+    socket->send (out.c_str (), out.size ());
 
     char buffer[3] = {};
     auto sz = socket->recv (buffer, 3, 0);
-    if ((sz != 2) || (strncmp(buffer, "OK", 3) != 0))
+    if ((sz != 2) || (strncmp (buffer, "OK", 3) != 0))
     {
         throw initFailure ();
     }
@@ -71,7 +77,7 @@ void dimeClientInterface::close ()
         outgoing["name"] = name;
 
         std::stringstream ss;
-        writer->write(outgoing, &ss);
+        writer->write (outgoing, &ss);
 
         socket->send (ss.str ());
 
@@ -80,11 +86,80 @@ void dimeClientInterface::close ()
     socket = nullptr;
 }
 
-void dimeClientInterface::sync () {}
+std::vector<double> decodeu8todouble (std::string u8)
+{
+    std::string &v = u8;
+    std::vector<uint8_t> xx = utilities::base64_decode (v);
+    std::vector<double> inter (xx.size () / 8);
+
+    int k = 0;
+
+    for (int ii = 0; ii < xx.size () / 8; ++ii)
+    {
+        uint8_t *b = &xx[ii * 8];
+        memcpy (&inter[k], b, sizeof (b));
+        ++k;
+    }
+    return inter;
+}
+
+void decode_DR_msg (Json_gd::Value request)
+{
+    Json_gd::FastWriter fw;
+    std::cout << "receive DR request " << std::endl;
+    std::cout << request << std::endl;
+
+    std::vector<double> bus = decodeu8todouble (request["func_args"][2]["id"]["data"].asString ());
+    std::vector<double> amount = decodeu8todouble (request["func_args"][2]["action"]["data"].asString ());
+    std::vector<double> duration = decodeu8todouble (request["func_args"][2]["duration"]["data"].asString ());
+
+    for (int ii = 0; ii < bus.size (); ++ii)
+    {
+        DDC_command.push_back (boost::tuple<double, double, double> (bus[ii], amount[ii], duration[ii]));
+    }
+}
+
+std::string dimeClientInterface::sync ()
+{
+    std::string cmd_type;
+    std::string dev_name;
+    int flg = 0;
+    while (flg != 1)
+    {
+        char buffer[100000];
+        Json_gd::Value outgoing;
+        outgoing["command"] = "sync";
+        outgoing["name"] = "GridDyn";
+        outgoing["args"] = "";
+
+        Json_gd::FastWriter fw;
+
+        std::string out = fw.write (outgoing);
+        socket->send (out.c_str (), out.size ());
+        auto sz = socket->recv (buffer, 100000, 0);
+        if ((sz != 2) || (buffer[0] != 'O') || (buffer[1] != 'K'))
+        {
+            std::string req (buffer);
+            Json_gd::Value request;
+            Json_gd::Reader readreq;
+            readreq.parse (req, request);
+
+            dev_name = request["func_args"][1].asString ();
+            if (dev_name == "DDC")
+            {
+                cmd_type = "Demand response";
+                decode_DR_msg (request);
+                flg = 1;
+            }
+        }
+    }
+    return cmd_type;
+}
 
 void encodeVariableMessage (Json_gd::Value &data, double val)
 {
     Json_gd::Value content;
+    Json_gd::FastWriter fw;
     content["stdout"] = "";
     content["figures"] = "";
     content["datadir"] = "/tmp MatlabData/";
@@ -93,11 +168,7 @@ void encodeVariableMessage (Json_gd::Value &data, double val)
     response["content"] = content;
     response["result"] = val;
     response["success"] = true;
-    data["args"] = response;
-    // response = { 'content': {'stdout': '', 'figures' : [], 'datadir' : '/tmp MatlabData/'}, 'result' : value,
-    // 'success' : True } 	outgoing = { 'command': 'response', 'name' : self.name, 'meta' : {'var_name':
-    // var_name},
-    //'args' : self.matlab.json_encode(response) }
+    data["args"] = fw.write (response);
 }
 void dimeClientInterface::send_var (const std::string &varName, double val, const std::string &recipient)
 {
@@ -109,12 +180,12 @@ void dimeClientInterface::send_var (const std::string &varName, double val, cons
     outgoing["name"] = name;
     outgoing["args"] = varName;
 
-    std::stringstream ss;
-    writer->write(outgoing, &ss);
-    socket->send (ss.str());
+    Json_gd::FastWriter fw;
+    std::string out = fw.write (outgoing);
+    socket->send (out.c_str (), out.size ());
 
-    char buffer[3];
-    auto sz = socket->recv (buffer, 3, 0);
+    char buffer[100];
+    auto sz = socket->recv (buffer, 100, 0);
     // TODO check recv value
 
     Json_gd::Value outgoingData;
@@ -128,20 +199,54 @@ void dimeClientInterface::send_var (const std::string &varName, double val, cons
     outgoingData["meta"]["var_name"] = varName;
     encodeVariableMessage (outgoingData, val);
 
-    std::stringstream().swap(ss); // reset ss
-    writer->write(outgoingData, &ss);
-    socket->send (ss.str ());
+    out = fw.write (outgoingData);
+    socket->send (out.c_str (), out.size ());
 
     sz = socket->recv (buffer, 3, 0);
-    if (sz != 2) // TODO check for "OK"
+    if (sz != 2)  // TODO check for "OK"
     {
         throw (sendFailure ());
     }
 }
 
-void dimeClientInterface::broadcast (const std::string &varName, double val)
+void dimeClientInterface::broadcast (const std::string &varName, double val) { send_var (varName, val); }
+
+std::vector<std::string> dimeClientInterface::get_devices ()
 {
-    send_var (varName, val);
+    std::vector<std::string> dev_list;
+    char buffer[100];
+    Json_gd::Value outgoing;
+    outgoing["command"] = "get_devices";
+    outgoing["name"] = name;
+
+    Json_gd::FastWriter fw;
+
+    std::string out = fw.write (outgoing);
+    socket->send (out.c_str (), out.size ());
+
+    socket->recv (buffer, 100, 0);
+    std::string devlist (buffer);
+    int nu = devlist.find_last_of ('}');
+    std::string tempc = devlist.substr (0, nu);
+
+    Json_gd::Reader re;
+    Json_gd::Value devlistj;
+    re.parse (tempc, devlistj);
+    int dev_count = (int)devlistj["response"].size ();
+    for (int ii = 0; ii <= dev_count - 1; ++ii)
+    {
+        if (devlistj["response"][ii].asString () != name)
+        {
+            dev_list.push_back (devlistj["response"][ii].asString ());
+            std::cout << devlistj["response"][ii].asString () + " are connected with server" << std::endl;
+        }
+    }
+    if (dev_list.empty ())
+    {
+        std::cout << "no client is connected" << std::endl;
+    }
+
+    return dev_list;
 }
 
-void dimeClientInterface::get_devices () {}
+dimeClientInterface::DDC_list dimeClientInterface::get_DR_cmd () { return DDC_command; }

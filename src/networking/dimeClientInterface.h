@@ -17,6 +17,8 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <vector>
+#include "boost/tuple/tuple.hpp"
 
 class initFailure : public std::exception
 {
@@ -45,12 +47,17 @@ class dimeClientInterface
     /** close the connection*/
     void close ();
     /** sync with the server*/
-    void sync ();
+    std::string sync ();
     /** send a variable to server*/
     void send_var (const std::string &varName, double val, const std::string &recipient = "");
-    void broadcast (const std::string &varName, double val);
+    
+	void broadcast (const std::string &varName, double val);
 
-    void get_devices ();
+    std::vector<std::string> get_devices ();
+
+	typedef std::vector<boost::tuple<double, double, double>> DDC_list;
+
+	DDC_list get_DR_cmd ();
 
   private:
     std::unique_ptr<zmq::socket_t> socket;

@@ -14,7 +14,7 @@
 #define DIME_COLLECTOR_HEADER_
 
 #include "griddyn/measurement/collector.h"
-
+#include "core/coreObject.h"
 class dimeClientInterface;
 
 namespace griddyn
@@ -42,8 +42,8 @@ class dimeCollector : public collector
     void set (const std::string &param, const std::string &val) override;
 
     virtual const std::string &getSinkName () const override;
+    coreObject *m_obj = nullptr;  //!< the target object of the event
 };
-
 }  // namespace dimeLib
 }  // namespace griddyn
 #endif
