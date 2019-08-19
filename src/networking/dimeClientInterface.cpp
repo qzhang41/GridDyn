@@ -24,6 +24,7 @@
 #include "json/jsoncpp.h"
 #endif
 
+static griddyn::Area *gdbus;
 dimeClientInterface::dimeClientInterface (const std::string &dimeName, const std::string &dimeAddress)
     : name (dimeName), address (dimeAddress)
 {
@@ -250,3 +251,17 @@ std::vector<std::string> dimeClientInterface::get_devices ()
 }
 
 dimeClientInterface::DDC_list dimeClientInterface::get_DR_cmd () { return DDC_command; }
+
+void dimeClientInterface::sendinfo (griddyn::Area *gdbus_f) { gdbus = gdbus_f; }
+void dimeClientInterface::set_control (DDC_list DDC_command)
+{
+    for (int ii = 0; ii < DDC_command.size (); ii++)
+    {
+        int bus = boost::get<0> (DDC_command[ii]);
+        double amount = boost::get<1> (DDC_command[ii]);
+        std::cout << gdbus->m_Buses[bus] << std::endl;
+        auto *target_bus = gdbus->m_Buses[bus];
+        target_bus->S.loadP = amount;
+        // gdbus->m_Buses[bus]->S.loadP = amount;
+    }
+}

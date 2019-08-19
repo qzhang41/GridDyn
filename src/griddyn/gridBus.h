@@ -60,6 +60,7 @@ whatever it gets set to
 class gridBus : public gridPrimary
 {
   public:
+    busPowers S;  //!< storage for the power computation from the various sources;
     /** @brief flags for the buses*/
 
     static std::atomic<count_t> busCount;  //!<  counter for the buses
@@ -92,7 +93,6 @@ class gridBus : public gridPrimary
     double angle = 0.0;  //!< [rad]     voltage angle
     double voltage = 1.0;  //!< [puV]    per unit voltage magnitude
     double freq = 1.0;  //!<[puHz] estimated actual frequency
-    busPowers S;  //!< storage for the power computation from the various sources;
     objVector<Generator *> attachedGens;  //!< list of the attached generators
     objVector<Load *> attachedLoads;  //!<  list of all the loads
     objVector<Link *> attachedLinks;  //!< list of the attached links

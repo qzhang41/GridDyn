@@ -36,6 +36,7 @@ class Area : public gridPrimary
     friend class listMaintainer;
 
   public:
+    std::vector<gridBus *> m_Buses;  //!< list of buses contained in a the area
     /** @brief flags for area operations and control*/
     enum area_flags
     {
@@ -46,7 +47,6 @@ class Area : public gridPrimary
     };
 
   private:
-    std::vector<gridBus *> m_Buses;  //!< list of buses contained in a the area
     std::vector<Link *> m_Links;  //!< links completely inside the area
     std::vector<Link *> m_externalLinks;  //!< links going to other areas
     std::vector<Area *> m_Areas;  //!< list of the areas contained within the parent area

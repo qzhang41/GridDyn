@@ -10,8 +10,8 @@
  * LLNS Copyright End
  */
 
-#include "Area.h"
 #include "dimeCollector.h"
+#include "Area.h"
 #include "dimeClientInterface.h"
 #include <iostream>
 
@@ -20,7 +20,6 @@ namespace griddyn
 namespace dimeLib
 {
 static Area *gdbus;
-
 dimeCollector::dimeCollector (coreTime time0, coreTime period) : collector (time0, period) {}
 
 dimeCollector::dimeCollector (const std::string &collectorName) : collector (collectorName) {}
@@ -53,10 +52,19 @@ void dimeCollector::cloneTo (collector *col) const
 
 void dimeCollector::sendbus (Area *gdbus_f)
 {
-	//Area *gdbus_b; 
-	gdbus = gdbus_f;
+    // Area *gdbus_b;
+    gdbus = gdbus_f;
 }
-
+// void set_control (dimeClientInterface::DDC_list DDC_command)
+//{
+//    for (int ii = 0; ii < DDC_command.size (); ii++)
+//    {
+//        int bus = boost::get<0> (DDC_command[ii]);
+//        double amount = boost::get<1> (DDC_command[ii]);
+//        std::cout << gdbus->m_Buses << std::endl;
+//        //gdbus->m_Buses[bus]->S.loadP = amount;
+//    }
+//}
 
 change_code dimeCollector::trigger (coreTime time)
 {
@@ -66,21 +74,28 @@ change_code dimeCollector::trigger (coreTime time)
         dime->init ();
     }
     auto out = collector::trigger (time);
+    double current_time = time;
     // figure out what to do with the data
     std::vector<std::string> dev_list = dime->get_devices ();
-    if (!dev_list.empty ())
+    if (current_time != 5)
     {
-        for (int ii = 0; ii < dev_list.size (); ii++)
+        if (!dev_list.empty ())
         {
-            for (size_t kk = 0; kk < points.size (); ++kk)
+            for (int ii = 0; ii < dev_list.size (); ii++)
             {
-                dime->send_var (points[kk].colname, data[kk], dev_list[ii]);
+                for (size_t kk = 0; kk < points.size (); ++kk)
+                {
+                    dime->send_var (points[kk].colname, data[kk], dev_list[ii]);
+                }
             }
-        }
-        std::string cmd_type = dime->sync ();
-        if (cmd_type == "Demand response")
-        {
-            dimeClientInterface::DDC_list DDC_command = dime->get_DR_cmd ();
+            std::string cmd_type = dime->sync ();
+            dimeClientInterface::DDC_list DDC_command;
+            if (cmd_type == "Demand response")
+            {
+                dime->sendinfo (gdbus);
+                DDC_command = dime->get_DR_cmd ();  // format: bus number, DR amount, duration
+                dime->set_control (DDC_command);
+            }
         }
     }
 

@@ -11,7 +11,8 @@
  */
 
 #pragma once
-
+#include "Area.h"
+#include "gridbus.h"
 #include "cppzmq/zmq_addon.hpp"
 #include "json/jsoncpp.h"
 #include <exception>
@@ -59,6 +60,8 @@ class dimeClientInterface
 
 	DDC_list get_DR_cmd ();
 
+	void dimeClientInterface::set_control (DDC_list DDC_command);
+    void dimeClientInterface::sendinfo (griddyn::Area *gdbus_f);
   private:
     std::unique_ptr<zmq::socket_t> socket;
     std::unique_ptr<Json_gd::StreamWriter> writer{};

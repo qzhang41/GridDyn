@@ -5,15 +5,15 @@
    <import file="IEEE39.dyr"/>
 
 
-    <bus name="bus3">
-      <type>PQ</type>
+    <!-- <bus name="bus3"> -->
+      <!-- <type>PQ</type> -->
       <!-- <angle>0.082</angle> -->
-	  <load name="load1">
-         <P>1.15</P>
-         <Q>0.31</Q>
-		 <event>@5|p=0</event>
-      </load>
-   </bus>
+	  <!-- <load name="load1"> -->
+         <!-- <P>1.15</P> -->
+         <!-- <Q>0.31</Q> -->
+		 <!-- <event>@5|p=0</event> -->
+      <!-- </load> -->
+   <!-- </bus> -->
    
    
    <collector type="dime" period=1 name="dime1">
@@ -22,9 +22,9 @@
    <processname>GridDyn</processname>
    </collector>
    <timestart>0</timestart>
-   <timestop>50</timestop>
+   <timestop>10</timestop>
    
-   <recorder period=1 field="frequency">
+   <recorder period=1 field="auto">
    <file>out39bus.csv</file>
    </recorder>
 </griddyn>
