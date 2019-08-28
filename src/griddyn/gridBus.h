@@ -61,6 +61,7 @@ class gridBus : public gridPrimary
 {
   public:
     busPowers S;  //!< storage for the power computation from the various sources;
+    objVector<Load *> attachedLoads;  //!<  list of all the loads
     /** @brief flags for the buses*/
 
     static std::atomic<count_t> busCount;  //!<  counter for the buses
@@ -94,7 +95,7 @@ class gridBus : public gridPrimary
     double voltage = 1.0;  //!< [puV]    per unit voltage magnitude
     double freq = 1.0;  //!<[puHz] estimated actual frequency
     objVector<Generator *> attachedGens;  //!< list of the attached generators
-    objVector<Load *> attachedLoads;  //!<  list of all the loads
+
     objVector<Link *> attachedLinks;  //!< list of the attached links
 
     IOdata outputs;  //!< the current output values

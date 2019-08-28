@@ -10,6 +10,7 @@
  * LLNS Copyright End
  */
 
+#include "load.h"
 #include "dimeClientInterface.h"
 #include "utilities/base64.h"
 #include "zmqLibrary/zmqContextManager.h"
@@ -77,10 +78,13 @@ void dimeClientInterface::close ()
         outgoing["command"] = "exit";
         outgoing["name"] = name;
 
-        std::stringstream ss;
-        writer->write (outgoing, &ss);
+		Json_gd::FastWriter fw;
+        std::string out = fw.write (outgoing);
+        socket->send (out.c_str (), out.size ());
+        //        std::stringstream ss;
+//        writer->write (outgoing, &ss);
 
-        socket->send (ss.str ());
+//        socket->send (ss.str ());
 
         socket->close ();
     }
@@ -261,7 +265,9 @@ void dimeClientInterface::set_control (DDC_list DDC_command)
         double amount = boost::get<1> (DDC_command[ii]);
         std::cout << gdbus->m_Buses[bus] << std::endl;
         auto *target_bus = gdbus->m_Buses[bus];
-        target_bus->S.loadP = amount;
+        target_bus->S.loadP += amount;
+        target_bus->attachedLoads[0]->P += amount;
         // gdbus->m_Buses[bus]->S.loadP = amount;
+        std::cout << amount << std::endl;
     }
 }

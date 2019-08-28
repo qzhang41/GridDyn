@@ -23,6 +23,7 @@ class gridBus;
 class Load : public gridSecondary
 {
   public:
+    double P = 0.0;  //!< [pu] real component of the load (constant Power)
     /** flags used in the load objec*/
     enum load_flags
     {
@@ -30,7 +31,7 @@ class Load : public gridSecondary
     };
     static std::atomic<count_t> loadCount;  //!< counter for automatic load id's
   protected:
-    double P = 0.0;  //!< [pu] real component of the load (constant Power)
+
     double Q = 0.0;  //!< [pu] imaginary component of the load (constant Power)
     parameter_t pfq = 0.0;  //!< power factor multiply  sqrt((1-pf*pf)/pf*pf)
   public:

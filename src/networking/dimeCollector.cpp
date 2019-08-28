@@ -77,7 +77,7 @@ change_code dimeCollector::trigger (coreTime time)
     double current_time = time;
     // figure out what to do with the data
     std::vector<std::string> dev_list = dime->get_devices ();
-    if (current_time != 5)
+    if (current_time != 0)
     {
         if (!dev_list.empty ())
         {
